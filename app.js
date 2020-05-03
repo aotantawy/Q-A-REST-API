@@ -54,7 +54,7 @@ app.post("/ask", (req, res) => { // adding brand new question
     });
     newQuestion.save((err, result) => {
         if (err) {
-            res.status(400).json({ message: err.message });
+            res.json({ message: err.message });
         } else {
             res.status(202).json({ message: "Question saved", question: result });
         }
@@ -86,18 +86,17 @@ app.route("/question/:questionID")
                     }
                 });
         } else {
-            res.json({ message: "No Answer Body " });
+            res.json({ message: "Answer body Not Found" });
         }
     })
     .patch((req, res) => { // patching the question (update header or description )
         QAModel.updateOne({ _id: req.params.questionID },
             { $set: req.body },
-            (err, result) => {
-                console.log(result);
+            (err) => {
                 if (err) {
                     res.json({ message: err.message });
                 } else {
-                    res.status(202).json({ message: "Question Updated", result: result });
+                    res.status(202).json({ message: "Question Updated" });
                 }
             });
     })
@@ -110,6 +109,35 @@ app.route("/question/:questionID")
             }
         })
     });
+
+
+app.route("/question/:questionID/answer/:answerID")
+    .patch((req, res) => {  // patching answer on a certain question  using question id 
+        QAModel.updateOne({
+            _id: req.params.questionID,
+            answers: { $elemMatch: { _id: req.params.answerID } }
+        },
+            { $set: { "answers.$.answer": req.body.answer } },
+            (err) => {
+                if (err) {
+                    res.json({ message: err.message });
+                } else {
+                    res.status(202).json({ message: "Answer Updated" });
+                }
+            });
+    })
+    .delete((req, res) => { // delete a specific answer on specific question 
+        QAModel.updateOne({ _id: req.params.questionID },
+            { $pull: { answers: { _id: req.params.answerID } } },
+            (err) => {
+                if (err) {
+                    res.json({ message: err.message });
+                } else {
+                    res.status(202).json({ message: "Answer Deleted" });
+                }
+            });
+    });
+
 
 
 app.listen(3000, () => {
