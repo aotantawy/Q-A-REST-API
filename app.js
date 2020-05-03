@@ -72,6 +72,23 @@ app.route("/question/:questionID")
             }
         });
     })
+    .post((req, res) => { // posting new answer for this question 
+        const answer = req.body.answer;
+        // to handle sending answer = ""
+        if (answer) {
+            QAModel.updateOne({ _id: req.params.questionID },
+                { $push: { answers: { answer: answer } } },
+                (err) => {
+                    if (err) {
+                        res.json({ message: err.message });
+                    } else {
+                        res.status(202).json({ message: "Answer Added" });
+                    }
+                });
+        } else {
+            res.json({ message: "No Answer Body " });
+        }
+    })
     .patch((req, res) => { // patching the question (update header or description )
         QAModel.updateOne({ _id: req.params.questionID },
             { $set: req.body },
