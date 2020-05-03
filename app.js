@@ -30,6 +30,37 @@ const questionsSchema = {
 
 const QAModel = mongoose.model("QA", questionsSchema);
 
+
+app.get("/", (req, res) => {  // return all Q and A  
+    QAModel.find((err, questions) => {
+        if (err) {
+            res.status(500).json({ message: err.message });
+        } else {
+            res.status(202).json({
+                questions: questions // returning all questions in array 
+            });
+        }
+    });
+});
+
+app.post("/ask", (req, res) => { // adding brand new question 
+
+    const questionHeader = req.body.questionHeader;
+    const questionDescription = req.body.questionDescription;
+
+    const newQuestion = new QAModel({
+        questionHeader: questionHeader,
+        questionDescription: questionDescription
+    });
+    newQuestion.save((err, result) => {
+        if (err) {
+            res.status(400).json({ message: err.message });
+        } else {
+            res.status(202).json({ message: "Question saved successfully!!!", question: result });
+        }
+    });
+});
+
 app.listen(3000, () => {
     console.log("server start listening on port 3000");
 
