@@ -56,10 +56,44 @@ app.post("/ask", (req, res) => { // adding brand new question
         if (err) {
             res.status(400).json({ message: err.message });
         } else {
-            res.status(202).json({ message: "Question saved successfully!!!", question: result });
+            res.status(202).json({ message: "Question saved", question: result });
         }
     });
 });
+
+
+app.route("/question/:questionID")
+    .get((req, res) => { // return a specific question using id  
+        QAModel.findById(req.params.questionID, (err, question) => {
+            if (err) {
+                res.json({ message: err.message });
+            } else if (question) {
+                res.status(202).json({ question: question });
+            }
+        });
+    })
+    .patch((req, res) => { // patching the question (update header or description )
+        QAModel.updateOne({ _id: req.params.questionID },
+            { $set: req.body },
+            (err, result) => {
+                console.log(result);
+                if (err) {
+                    res.json({ message: err.message });
+                } else {
+                    res.status(202).json({ message: "Question Updated", result: result });
+                }
+            });
+    })
+    .delete((req, res) => { // delete a specific question by his id 
+        QAModel.findByIdAndDelete(req.params.questionID, (err, result) => {
+            if (err) {
+                res.status(400).json({ message: err.message });
+            } else {
+                res.status(202).json({ message: "Question Deleted", question: result });
+            }
+        })
+    });
+
 
 app.listen(3000, () => {
     console.log("server start listening on port 3000");
