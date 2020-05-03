@@ -3,8 +3,8 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
-
 const app = express();
+
 app.use(bodyParser.urlencoded({ extended: true }));
 
 mongoose.connect("mongodb://localhost:27017/QADB", { useNewUrlParser: true, useUnifiedTopology: true });
@@ -30,20 +30,29 @@ const questionsSchema = {
 
 const QAModel = mongoose.model("QA", questionsSchema);
 
-
-app.get("/", (req, res) => {  // return all Q and A  
+/**
+ * Find all Q&A
+ * @return {Object} Questions - questions document 
+ */
+app.get("/", (req, res) => {
     QAModel.find((err, questions) => {
         if (err) {
             res.status(500).json({ message: err.message });
         } else {
             res.status(202).json({
-                questions: questions // returning all questions in array 
+                questions: questions
             });
         }
     });
 });
 
-app.post("/ask", (req, res) => { // adding brand new question 
+/**
+ * Add new Question 
+ * @param {String} questionHeader - header of the question 
+ * @param {String} questionDescription - description of the question
+ * @return {Object} contains message state and saved question  
+ */
+app.post("/ask", (req, res) => {
 
     const questionHeader = req.body.questionHeader;
     const questionDescription = req.body.questionDescription;
@@ -63,22 +72,36 @@ app.post("/ask", (req, res) => { // adding brand new question
 
 
 app.route("/question/:questionID")
-    .get((req, res) => { // return a specific question using id  
-        QAModel.findById(req.params.questionID, (err, question) => {
-            if (err) {
-                res.json({ message: err.message });
-            } else if (question) {
-                res.status(202).json({ question: question });
-            }
-        });
+
+    /**
+     * get a specific question 
+     * @param {String} questionID - id of the question  
+     * @return {Object} contains question
+     */
+    .get((req, res) => {
+        QAModel.findById(req.params.questionID,
+            (err, question) => {
+                if (err) {
+                    res.json({ message: err.message });
+                } else if (question) {
+                    res.status(202).json({ question: question });
+                }
+            });
     })
-    .post((req, res) => { // posting new answer for this question 
+
+    /**
+     * Add answer to specific post (question)
+     * @param {String} questionID - id of the question
+     * @param {String} answer - posted answer  
+     * @return {Object} contains confirmation message
+     */
+    .post((req, res) => {
         const answer = req.body.answer;
         // to handle sending answer = ""
         if (answer) {
             QAModel.updateOne({ _id: req.params.questionID },
                 { $push: { answers: { answer: answer } } },
-                (err) => {
+                err => {
                     if (err) {
                         res.json({ message: err.message });
                     } else {
@@ -89,10 +112,17 @@ app.route("/question/:questionID")
             res.json({ message: "Answer body Not Found" });
         }
     })
-    .patch((req, res) => { // patching the question (update header or description )
+
+    /**
+     * update specific question (header, description or both)
+     * @param {String} questionID - id of the question 
+     * @param {object} body - that contains the update parts
+     * @return {Object} contains confirmation message 
+     */
+    .patch((req, res) => {
         QAModel.updateOne({ _id: req.params.questionID },
             { $set: req.body },
-            (err) => {
+            err => {
                 if (err) {
                     res.json({ message: err.message });
                 } else {
@@ -100,25 +130,40 @@ app.route("/question/:questionID")
                 }
             });
     })
-    .delete((req, res) => { // delete a specific question by his id 
-        QAModel.findByIdAndDelete(req.params.questionID, (err, result) => {
-            if (err) {
-                res.status(400).json({ message: err.message });
-            } else {
-                res.status(202).json({ message: "Question Deleted", question: result });
-            }
-        })
+
+    /**
+     * delete specific question 
+     * @param {String} questionID - id of the question
+     * @return {Object} contains confirmation message and deleted message content 
+     */
+    .delete((req, res) => {
+        QAModel.findByIdAndDelete(req.params.questionID,
+            (err, result) => {
+                if (err) {
+                    res.json({ message: err.message });
+                } else {
+                    res.status(202).json({ message: "Question Deleted", question: result });
+                }
+            })
     });
 
 
 app.route("/question/:questionID/answer/:answerID")
-    .patch((req, res) => {  // patching answer on a certain question  using question id 
+
+    /**
+     * update answer on a specific question 
+     * @param {String} questionID - id of the question
+     * @param {String} answerID - id of the answer 
+     * @param {String} newAnswer - modified answer
+     * @return {Object} contains confirmation message
+     */
+    .patch((req, res) => {
         QAModel.updateOne({
             _id: req.params.questionID,
             answers: { $elemMatch: { _id: req.params.answerID } }
         },
             { $set: { "answers.$.answer": req.body.answer } },
-            (err) => {
+            err => {
                 if (err) {
                     res.json({ message: err.message });
                 } else {
@@ -126,10 +171,17 @@ app.route("/question/:questionID/answer/:answerID")
                 }
             });
     })
-    .delete((req, res) => { // delete a specific answer on specific question 
+
+    /**
+     * delete answer on question 
+     * @param {String} questionID - id of the question 
+     * @param {String} answerID - id of the answer 
+     * @return {Object} contains confirmation message
+     */
+    .delete((req, res) => {
         QAModel.updateOne({ _id: req.params.questionID },
             { $pull: { answers: { _id: req.params.answerID } } },
-            (err) => {
+            err => {
                 if (err) {
                     res.json({ message: err.message });
                 } else {
@@ -138,7 +190,12 @@ app.route("/question/:questionID/answer/:answerID")
             });
     });
 
-
+/**
+ * make find query to get number of voters on a certain question 
+ * @param {String} questionID - id of the question 
+ * @param {String} voteType - type of vote whether it's upvote or downvote 
+ * @return {Promise} number of voters , error message 
+ */
 function findVote(questionID, voteType) {
 
     let promise = new Promise((resolve, reason) => {
@@ -153,6 +210,12 @@ function findVote(questionID, voteType) {
     return promise;
 }
 
+/**
+ * make update query to modify number of voters on a certain question 
+ * @param {String} questionID 
+ * @param {Object} updateQuery 
+ * @returns {Promise} 
+ */
 function updateVote(questionID, updateQuery) {
     let promise = new Promise((resolve, reject) => {
         QAModel.updateOne(
@@ -171,7 +234,13 @@ function updateVote(questionID, updateQuery) {
 
 
 app.route("/question/:questionID/upvote")
-    .get((req, res) => { // get all the up vote 
+
+    /**
+     * get value of upvotes on a certain question 
+     * @param {String} questionID - id of the question 
+     * @return {Object} message - message contains number of voters 
+     */
+    .get((req, res) => {
 
         const findVoteFunction = findVote(req.params.questionID, "upVote");
 
@@ -182,13 +251,21 @@ app.route("/question/:questionID/upvote")
         })
 
     })
-    .put((req, res) => { // update up votes @params (take question id , current value of votes , new value to add )
-        const currentValue = parseInt(req.body.current); // Current value of (up)votes 
-        const addToCurrentVote = parseInt(req.body.add); // add This value to the current 
+
+    /**
+     * update number of upvote
+     * @param {String} questionID - id of the question 
+     * @param {String} currentVoteValue - current value of upvote
+     * @param {String} addToCurrentVote - value to be added on current value 
+     * @return {Object} 
+     */
+    .put((req, res) => {
+        const currentValue = parseInt(req.body.current);
+        const addToCurrentVote = parseInt(req.body.add);
         const updateVoteFunction = updateVote(req.params.questionID, { "upVote": currentValue + addToCurrentVote });
 
         updateVoteFunction.then(resolve => {
-            res.status(202).json({ message: resolve });
+            res.status(202).json({ message: "Upvotes value updated" });
         }, reject => {
             res.json({ message: reject });
         });
@@ -196,7 +273,13 @@ app.route("/question/:questionID/upvote")
 
 
 app.route("/question/:questionID/downvote")
-    .get((req, res) => { // get all down vote 
+
+    /**
+     * get value of downvotes on a certain question
+     * @param {String} questionID - id of the question
+     * @return {Object} message - message contains number of voters
+     */
+    .get((req, res) => {
 
         const findVoteFunction = findVote(req.params.questionID, "downVote");
         findVoteFunction.then(
@@ -208,7 +291,15 @@ app.route("/question/:questionID/downvote")
         )
 
     })
-    .put((req, res) => { // update the down votes @params (get current value of down votes, new value to be added)
+
+    /**
+    * update number of downvote
+    * @param {String} questionID - id of the question
+    * @param {String} currentVoteValue - current value of downvoters
+    * @param {String} addToCurrentVote - value to be added on current value
+    * @return {Object}
+    */
+    .put((req, res) => {
 
         const currentVoteValue = parseInt(req.body.current);
         const addToCurrentVote = parseInt(req.body.add);
