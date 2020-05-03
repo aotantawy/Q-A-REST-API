@@ -139,6 +139,90 @@ app.route("/question/:questionID/answer/:answerID")
     });
 
 
+function findVote(questionID, voteType) {
+
+    let promise = new Promise((resolve, reason) => {
+        QAModel.findOne({ _id: questionID }, voteType, (err, result) => {
+            if (err) {
+                reason(err.message);
+            } else {
+                resolve(result);
+            }
+        })
+    });
+    return promise;
+}
+
+function updateVote(questionID, updateQuery) {
+    let promise = new Promise((resolve, reject) => {
+        QAModel.updateOne(
+            { _id: questionID },
+            updateQuery,
+            (err, result) => {
+                if (err) {
+                    reject(err.message);
+                } else {
+                    resolve(result);
+                }
+            });
+    });
+    return promise;
+}
+
+
+app.route("/question/:questionID/upvote")
+    .get((req, res) => { // get all the up vote 
+
+        const findVoteFunction = findVote(req.params.questionID, "upVote");
+
+        findVoteFunction.then(resolve => {
+            res.status(202).json({ message: resolve });
+        }, reject => {
+            res.json({ message: reject });
+        })
+
+    })
+    .put((req, res) => { // update up votes @params (take question id , current value of votes , new value to add )
+        const currentValue = parseInt(req.body.current); // Current value of (up)votes 
+        const addToCurrentVote = parseInt(req.body.add); // add This value to the current 
+        const updateVoteFunction = updateVote(req.params.questionID, { "upVote": currentValue + addToCurrentVote });
+
+        updateVoteFunction.then(resolve => {
+            res.status(202).json({ message: resolve });
+        }, reject => {
+            res.json({ message: reject });
+        });
+    });
+
+
+app.route("/question/:questionID/downvote")
+    .get((req, res) => { // get all down vote 
+
+        const findVoteFunction = findVote(req.params.questionID, "downVote");
+        findVoteFunction.then(
+            resolved => {
+                res.status(202).json({ message: resolved });
+            }, reject => {
+                res.json({ message: reject });
+            }
+        )
+
+    })
+    .put((req, res) => { // update the down votes @params (get current value of down votes, new value to be added)
+
+        const currentVoteValue = parseInt(req.body.current);
+        const addToCurrentVote = parseInt(req.body.add);
+        const updateVoteFunction = updateVote(req.params.questionID, { "downVote": currentVoteValue + addToCurrentVote });
+        updateVoteFunction.then(
+            resolved => {
+                res.status(202).json({ message: resolved });
+            }, rejected => {
+                res.json({ message: rejected });
+            }
+        )
+    });
+
+
 
 app.listen(3000, () => {
     console.log("server start listening on port 3000");
