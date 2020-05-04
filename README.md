@@ -55,7 +55,7 @@
       - answerID:String 
     - **response**
       - message:String
-*******************
+**************
 ### /question/{questionID}/upvote
   - GET get number of upvoters
     - **request path parameters**
@@ -70,7 +70,7 @@
       - addToCurrentVote:String
     - **response**
       - message:String
-*******************
+**************
 ### /question/{questionID}/downvote
   - GET get number of downvoters
     - **request path parameters**
