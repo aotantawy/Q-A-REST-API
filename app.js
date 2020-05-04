@@ -32,7 +32,7 @@ const QAModel = mongoose.model("QA", questionsSchema);
 
 /**
  * Find all Q&A
- * @return {Object} Questions - questions document 
+ * @return {Array} questions - questions document 
  */
 app.get("/", (req, res) => {
     QAModel.find((err, questions) => {
@@ -48,9 +48,9 @@ app.get("/", (req, res) => {
 
 /**
  * Add new Question 
- * @param {String} questionHeader - header of the question 
- * @param {String} questionDescription - description of the question
- * @return {Object} contains message state and saved question  
+ * @body {String} questionHeader - header of the question 
+ * @body {String} questionDescription - description of the question
+ * @response {Object} contains message state and saved question  
  */
 app.post("/ask", (req, res) => {
 
@@ -75,8 +75,8 @@ app.route("/question/:questionID")
 
     /**
      * get a specific question 
-     * @param {String} questionID - id of the question  
-     * @return {Object} contains question
+     * @path {String} questionID - id of the question  
+     * @response {Object} contains question
      */
     .get((req, res) => {
         QAModel.findById(req.params.questionID,
@@ -91,9 +91,9 @@ app.route("/question/:questionID")
 
     /**
      * Add answer to specific post (question)
-     * @param {String} questionID - id of the question
-     * @param {String} answer - posted answer  
-     * @return {Object} contains confirmation message
+     * @path {String} questionID - id of the question
+     * @body {String} answer - posted answer  
+     * @response {String} - confirmation message
      */
     .post((req, res) => {
         const answer = req.body.answer;
@@ -115,9 +115,9 @@ app.route("/question/:questionID")
 
     /**
      * update specific question (header, description or both)
-     * @param {String} questionID - id of the question 
-     * @param {object} body - that contains the update parts
-     * @return {Object} contains confirmation message 
+     * @path {String} questionID - id of the question 
+     * @body {object} body - that contains the update parts
+     * @response {String} - confirmation message 
      */
     .patch((req, res) => {
         QAModel.updateOne({ _id: req.params.questionID },
@@ -133,8 +133,8 @@ app.route("/question/:questionID")
 
     /**
      * delete specific question 
-     * @param {String} questionID - id of the question
-     * @return {Object} contains confirmation message and deleted message content 
+     * @path {String} questionID - id of the question
+     * @response {String} - confirmation message and deleted message content 
      */
     .delete((req, res) => {
         QAModel.findByIdAndDelete(req.params.questionID,
@@ -151,11 +151,11 @@ app.route("/question/:questionID")
 app.route("/question/:questionID/answer/:answerID")
 
     /**
-     * update answer on a specific question 
-     * @param {String} questionID - id of the question
-     * @param {String} answerID - id of the answer 
-     * @param {String} newAnswer - modified answer
-     * @return {Object} contains confirmation message
+     * update answer for a certain question
+     * @path {String} questionID - id of the question
+     * @path {String} answerID - id of the answer 
+     * @body {String} newAnswer - modified answer
+     * @response {String} - confirmation message
      */
     .patch((req, res) => {
         QAModel.updateOne({
@@ -174,9 +174,9 @@ app.route("/question/:questionID/answer/:answerID")
 
     /**
      * delete answer on question 
-     * @param {String} questionID - id of the question 
-     * @param {String} answerID - id of the answer 
-     * @return {Object} contains confirmation message
+     * @path {String} questionID - id of the question 
+     * @path {String} answerID - id of the answer 
+     * @response {String} - confirmation message
      */
     .delete((req, res) => {
         QAModel.updateOne({ _id: req.params.questionID },
@@ -237,8 +237,8 @@ app.route("/question/:questionID/upvote")
 
     /**
      * get value of upvotes on a certain question 
-     * @param {String} questionID - id of the question 
-     * @return {Object} message - message contains number of voters 
+     * @path {String} questionID - id of the question 
+     * @response {String} - number of voters 
      */
     .get((req, res) => {
 
@@ -253,11 +253,11 @@ app.route("/question/:questionID/upvote")
     })
 
     /**
-     * update number of upvote
-     * @param {String} questionID - id of the question 
-     * @param {String} currentVoteValue - current value of upvote
-     * @param {String} addToCurrentVote - value to be added on current value 
-     * @return {Object} 
+     * update number of upvoters
+     * @path {String} questionID - id of the question 
+     * @body {String} currentVoteValue - current value of upvote
+     * @body {String} addToCurrentVote - value to be added on current value 
+     * @response {String} 
      */
     .put((req, res) => {
         const currentValue = parseInt(req.body.current);
@@ -276,8 +276,8 @@ app.route("/question/:questionID/downvote")
 
     /**
      * get value of downvotes on a certain question
-     * @param {String} questionID - id of the question
-     * @return {Object} message - message contains number of voters
+     * @path {String} questionID - id of the question
+     * @response {Object} message - message contains number of voters
      */
     .get((req, res) => {
 
@@ -293,11 +293,11 @@ app.route("/question/:questionID/downvote")
     })
 
     /**
-    * update number of downvote
-    * @param {String} questionID - id of the question
-    * @param {String} currentVoteValue - current value of downvoters
-    * @param {String} addToCurrentVote - value to be added on current value
-    * @return {Object}
+    * update number of downvoters
+    * @path {String} questionID - id of the question
+    * @body {String} currentVoteValue - current value of downvoters
+    * @body {String} addToCurrentVote - value to be added on current value
+    * @response {String}
     */
     .put((req, res) => {
 
