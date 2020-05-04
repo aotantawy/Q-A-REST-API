@@ -2,15 +2,15 @@
 
 ### GET / Get all Q&A(s)
 **response**
-  question:Array
+  - question:Array
 ************
 ### post /ask ask new question 
-**request body parameters**
-  questionHeader:String 
-  [Optional]questionDescription:String 
-**response**
-  message:String
-  question:Object
+- **request body parameters**
+  - questionHeader:String 
+  - [Optional]questionDescription:String 
+- **response**
+  - message:String
+  - question:Object
 ************
 ### /question/{questionID}
   - GET get specific question 
