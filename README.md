@@ -1,7 +1,7 @@
 # Q&A REST API
 
 ### GET / Get all Q&A(s)
-**response**
+- **response**
   - question:Array
 ************
 ### post /ask ask new question 
